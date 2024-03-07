@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
 import { generateAuthorizationString } from '../helpers';
-import { Grid, Paper } from '@mui/material';
+import { Box, Container, Grid, Paper } from '@mui/material';
+import ProductsList from '../components/ProductsList';
+import Grid2 from '@mui/material/Unstable_Grid2';
 
 export default function ProductsListPage() {
   const [products, setProducts] = useState([]);
@@ -60,29 +62,30 @@ export default function ProductsListPage() {
   }, []);
 
   return (
-    <>
-      <Grid container spacing={2} justify="center">
-        {products?.map((product) => (
-          <Grid item key={product.id}>
-            <Paper
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                border: '1px solid black',
-                padding: '16px',
-                width: '160px',
-                height: '200px',
-              }}
-            >
-              <span>{product.id}</span>
-              <span>{product.product}</span>
-              <span>{product.brand}</span>
-              <span>{product.price}</span>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-    </>
+    <Box sx={{ display: 'flex' }}>
+      <Box
+        sx={{
+          minWidth: '20%',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          bgcolor: 'grey.300',
+        }}
+      >
+        <Box sx={{ p: 2 }}>Left Column Content</Box>
+      </Box>
+      <Box
+        sx={{
+          p: 2,
+          minHeight: '150vh',
+          bgcolor: 'secondary.light',
+          flexGrow: 1,
+        }}
+      >
+        {/* Content of the right column */}
+
+        <ProductsList products={products}></ProductsList>
+      </Box>
+    </Box>
   );
 }
