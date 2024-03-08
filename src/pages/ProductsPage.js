@@ -2,14 +2,25 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
 import { generateAuthorizationString } from '../helpers';
-import { Box, Container, Grid, Paper } from '@mui/material';
+import { Box } from '@mui/material';
 import ProductsList from '../components/ProductsList';
-import Grid2 from '@mui/material/Unstable_Grid2';
+import FilterForm from '../components/FilterForm';
+import FilterSelect from '../components/FilterSelect';
+import FilterInput from '../components/FilterInput';
+import FilterButton from '../components/FilterButton';
 
-export default function ProductsListPage() {
+export default function ProductsPage() {
+  const [filter, setFilter] = useState('none');
+  const [filterValue, setFilterValue] = useState('');
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleFilter = (event) => {
+    event.preventDefault();
+    console.log(filter, filterValue);
+  };
 
   useEffect(() => {
     const fetchProductsList = async () => {
@@ -58,32 +69,28 @@ export default function ProductsListPage() {
       }
     };
 
-    fetchProductsList();
+    // fetchProductsList();
   }, []);
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <Box
-        sx={{
-          minWidth: '20%',
-          height: '100vh',
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'grey.300',
-        }}
-      >
-        <Box sx={{ p: 2 }}>Left Column Content</Box>
-      </Box>
+      <FilterForm onFilter={handleFilter}>
+        <FilterSelect filter={filter} setFilter={setFilter} />
+        <FilterInput
+          filter={filter}
+          filterValue={filterValue}
+          setFilterValue={setFilterValue}
+        />
+        <FilterButton filter={filter} filterValue={filterValue} />
+      </FilterForm>
       <Box
         sx={{
           p: 2,
           minHeight: '150vh',
-          bgcolor: 'secondary.light',
+          bgcolor: 'grey.100',
           flexGrow: 1,
         }}
       >
-        {/* Content of the right column */}
-
         <ProductsList products={products}></ProductsList>
       </Box>
     </Box>
