@@ -2,16 +2,22 @@ import * as React from 'react';
 import TextField from '@mui/material/TextField';
 import { filterNames } from '../config';
 
-export default function FilterInput({ filter, filterValue, setFilterValue }) {
+export default function FilterInput({
+  filterKey,
+  filterValue,
+  setFilterValue,
+}) {
   return (
     <TextField
       id="filter-input"
-      disabled={filter === 'none'}
+      disabled={filterKey === 'none'}
       label={
-        filter === 'none' ? 'Выберите фильтр' : `Введите ${filterNames[filter]}`
+        filterKey === 'none'
+          ? 'Выберите фильтр'
+          : `Введите ${filterNames[filterKey]}`
       }
-      value={filterValue}
-      type={filter === 'price' ? 'number' : 'text'}
+      value={filterKey === 'none' ? '' : filterValue}
+      type={filterKey === 'price' ? 'number' : 'text'}
       onChange={(e) => setFilterValue(e.target.value)}
     />
   );

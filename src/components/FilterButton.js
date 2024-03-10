@@ -7,7 +7,7 @@ export default function FilterButton({ filter, filterValue }) {
       variant="contained"
       color="primary"
       sx={{ mt: 1 }}
-      disabled={filter === 'none' || filterValue === ''}
+      disabled={filter === 'none' ? false : filterValue === ''}
       type="submit"
     >
       Найти

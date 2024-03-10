@@ -1,21 +1,13 @@
 import React from 'react';
-import { Pagination, Stack } from '@mui/material';
 import ListItem from './ListItem';
 
-export default function ProductsList({ products }) {
-  // TODO: implement pagination
-
+export default function ProductsList({ productsOnPage, offset }) {
   return (
-    <Stack sx={{ width: '100%', gap: '12px' }}>
+    <>
       <ListItem isHeader={true} />
-      {products?.map((product, i) => (
-        <ListItem product={product} i={i} />
+      {productsOnPage?.map((product, i) => (
+        <ListItem product={product} index={i + 1 + offset} key={product?.id} />
       ))}
-      <Pagination
-        shape="rounded"
-        count={Math.ceil(products.length / 10)}
-        sx={{ alignSelf: 'center', mt: 2, mb: 2 }}
-      />
-    </Stack>
+    </>
   );
 }

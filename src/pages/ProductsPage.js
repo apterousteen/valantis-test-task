@@ -1,98 +1,120 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { API_URL } from '../config';
-import { generateAuthorizationString } from '../helpers';
 import { Box } from '@mui/material';
+import { ProductAPI } from '../apis/ProductAPI';
+import { API_LIMIT_PER_PAGE } from '../apis/config';
 import ProductsList from '../components/ProductsList';
 import FilterForm from '../components/FilterForm';
 import FilterSelect from '../components/FilterSelect';
 import FilterInput from '../components/FilterInput';
 import FilterButton from '../components/FilterButton';
+import Loader from '../components/Loader';
+import Main from '../components/Main';
+import ErrorMessage from '../components/ErrorMessage';
 
 export default function ProductsPage() {
-  const [filter, setFilter] = useState('none');
-  const [filterValue, setFilterValue] = useState('');
+  const [page, setPage] = useState(1);
+  const [productsTotalCount, setProductsTotalCount] = useState(0);
+  const offset = (page - 1) * API_LIMIT_PER_PAGE;
 
-  const [products, setProducts] = useState([]);
+  const [filterKey, setFilterKey] = useState('none');
+  const [filterValue, setFilterValue] = useState('');
+  const [filterParams, setFilterParams] = useState({});
+
+  const [productsOnPage, setProductsOnPage] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleFilter = (event) => {
+  const handleFilter = async (event) => {
     event.preventDefault();
-    console.log(filter, filterValue);
+
+    console.log(filterKey, filterValue);
+
+    setPage(1);
+    setFilterParams(() => {
+      if (filterKey === 'none') {
+        return {};
+      } else {
+        return {
+          key: filterKey,
+          value: filterValue,
+        };
+      }
+    });
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
   };
 
   useEffect(() => {
     const fetchProductsList = async () => {
       try {
         setLoading(true);
+        setLoading(true);
         setErrorMsg('');
 
-        const xAuthHeaderValue = generateAuthorizationString();
+        let ids;
+        if (
+          Object.keys(filterParams).length === 0 &&
+          filterParams.constructor === Object
+        ) {
+          ids = await ProductAPI.getIds();
+        } else {
+          ids = await ProductAPI.filter(filterParams);
+        }
 
-        const responseIds = await axios.post(
-          API_URL,
-          {
-            action: 'get_ids',
-            params: { offset: 0, limit: 10 },
-          },
-          {
-            headers: {
-              'X-Auth': xAuthHeaderValue,
-            },
-          }
-        );
+        if (ids.length === 0) {
+          throw new Error('No products found');
+        }
 
-        const responseItems = await axios.post(
-          API_URL,
-          {
-            action: 'get_items',
-            params: { ids: responseIds.data.result },
-          },
-          {
-            headers: {
-              'X-Auth': xAuthHeaderValue,
-            },
-          }
-        );
+        setProductsTotalCount(ids.length);
 
-        console.log(responseItems.data.result);
+        const items = await ProductAPI.getItems(ids, offset);
 
-        setProducts(responseItems.data.result);
+        setProductsOnPage(items);
         setErrorMsg('');
       } catch (e) {
-        setProducts([]);
         setErrorMsg(e.message);
-        console.error(e.message);
+        setProductsOnPage([]);
+        setProductsTotalCount(0);
       } finally {
         setLoading(false);
       }
     };
 
-    // fetchProductsList();
-  }, []);
+    fetchProductsList();
+  }, [page, filterParams]);
 
   return (
     <Box sx={{ display: 'flex' }}>
       <FilterForm onFilter={handleFilter}>
-        <FilterSelect filter={filter} setFilter={setFilter} />
+        <FilterSelect filter={filterKey} setFilter={setFilterKey} />
         <FilterInput
-          filter={filter}
+          filterKey={filterKey}
           filterValue={filterValue}
           setFilterValue={setFilterValue}
         />
-        <FilterButton filter={filter} filterValue={filterValue} />
+        <FilterButton filter={filterKey} filterValue={filterValue} />
       </FilterForm>
-      <Box
-        sx={{
-          p: 2,
-          minHeight: '150vh',
-          bgcolor: 'grey.100',
-          flexGrow: 1,
-        }}
+
+      <Main
+        page={page}
+        productsTotalCount={productsTotalCount}
+        onPageChange={handlePageChange}
       >
-        <ProductsList products={products}></ProductsList>
-      </Box>
+        {!errorMsg && (
+          <>
+            {loading && <Loader />}
+            {!loading && (
+              <ProductsList
+                productsOnPage={productsOnPage}
+                offset={offset}
+              ></ProductsList>
+            )}
+          </>
+        )}
+        {errorMsg && <ErrorMessage message={errorMsg} />}
+      </Main>
     </Box>
   );
 }
