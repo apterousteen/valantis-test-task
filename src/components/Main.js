@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Pagination, Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
+import ProductsPagination from './ProductsPagination';
 
 export default function Main({
   page,
@@ -8,23 +9,13 @@ export default function Main({
   children,
 }) {
   return (
-    <Box
-      sx={{
-        p: 2,
-        minHeight: '100dvh',
-        bgcolor: 'grey.100',
-        flexGrow: 1,
-      }}
-    >
+    <Box className="main">
       <Stack sx={{ width: '100%', minHeight: '100%', gap: '12px' }}>
         {children}
-
-        <Pagination
-          shape="rounded"
-          sx={{ alignSelf: 'center', mt: 2, mb: 2 }}
+        <ProductsPagination
           page={page}
-          count={Math.ceil(productsTotalCount / 50)}
-          onChange={onPageChange}
+          productsTotalCount={productsTotalCount}
+          onPageChange={onPageChange}
         />
       </Stack>
     </Box>

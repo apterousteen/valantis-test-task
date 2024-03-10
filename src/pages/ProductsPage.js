@@ -86,7 +86,7 @@ export default function ProductsPage() {
   }, [page, filterParams]);
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box className="products-page">
       <FilterForm onFilter={handleFilter}>
         <FilterSelect filter={filterKey} setFilter={setFilterKey} />
         <FilterInput
