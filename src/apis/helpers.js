@@ -15,3 +15,20 @@ export const deleteDublicateItems = (rawItems) => {
 
   return uniqueItems;
 };
+
+export const handleError = (e, retry = false) => {
+  const status = e.response ? e.response.status : '';
+  const data = e.response ? e.response.data : '';
+
+  if (status) {
+    console.error(
+      `${
+        retry ? 'Retry attempt' : ''
+      } Error: \nid: ${data} \nstatus: ${status} \nmessage: ${e.message}`
+    );
+  }
+
+  if (!retry && e.name !== 'CanceledError') {
+    throw e;
+  }
+};

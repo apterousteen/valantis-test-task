@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 import { ProductAPI } from '../apis/ProductAPI';
 import { API_LIMIT_PER_PAGE } from '../apis/config';
@@ -24,10 +24,10 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const initialRender = useRef(false);
+
   const handleFilter = async (event) => {
     event.preventDefault();
-
-    console.log(filterKey, filterValue);
 
     setPage(1);
     setFilterParams(() => {
@@ -47,9 +47,11 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const fetchProductsList = async () => {
       try {
-        setLoading(true);
         setLoading(true);
         setErrorMsg('');
 
@@ -58,31 +60,43 @@ export default function ProductsPage() {
           Object.keys(filterParams).length === 0 &&
           filterParams.constructor === Object
         ) {
-          ids = await ProductAPI.getIds();
+          ids = await ProductAPI.getIds(signal);
         } else {
-          ids = await ProductAPI.filter(filterParams);
+          ids = await ProductAPI.filter(signal, filterParams);
         }
 
-        if (ids.length === 0) {
+        if (ids?.length === 0) {
           throw new Error('No products found');
         }
 
-        setProductsTotalCount(ids.length);
+        if (ids?.length) {
+          setProductsTotalCount(ids.length);
+        }
 
-        const items = await ProductAPI.getItems(ids, offset);
+        const items = await ProductAPI.getItems(signal, ids, offset);
 
         setProductsOnPage(items);
         setErrorMsg('');
       } catch (e) {
-        setErrorMsg(e.message);
-        setProductsOnPage([]);
-        setProductsTotalCount(0);
+        if (e.name !== 'CanceledError' && e.name !== 'AbortError') {
+          setErrorMsg(e.message);
+          setProductsOnPage([]);
+          setProductsTotalCount(0);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProductsList();
+    if (initialRender.current) {
+      fetchProductsList();
+    } else {
+      initialRender.current = true;
+    }
+
+    return () => {
+      abortController.abort();
+    };
   }, [page, filterParams]);
 
   return (

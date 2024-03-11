@@ -1,55 +1,38 @@
-import axios from 'axios';
-import { API_URL, API_LIMIT_PER_PAGE } from './config';
-import { deleteDublicateItems, generateAuthorizationString } from './helpers';
+import { api, API_LIMIT_PER_PAGE } from './config';
+import { deleteDublicateItems, handleError } from './helpers';
 
 export const ProductAPI = {
-  getIds: async () => {
+  getIds: async (signal) => {
     try {
-      const response = await axios.post(
-        API_URL,
-        {
-          action: 'get_ids',
-        },
-        {
-          headers: {
-            'X-Auth': generateAuthorizationString(),
-          },
-        }
-      );
+      const response = await api.post('/', { action: 'get_ids' }, { signal });
 
       return [...new Set(response.data.result)];
     } catch (e) {
-      console.error('Error getting ids:', e.message);
-      throw e;
+      handleError(e);
     }
   },
 
-  getItems: async (ids, offset = 0, limit = API_LIMIT_PER_PAGE) => {
+  getItems: async (signal, ids, offset = 0, limit = API_LIMIT_PER_PAGE) => {
     try {
-      const response = await axios.post(
-        API_URL,
+      const response = await api.post(
+        '/',
         {
           action: 'get_items',
-          params: { ids: ids.slice(offset, limit + offset) },
+          params: { ids: ids?.slice(offset, limit + offset) },
         },
-        {
-          headers: {
-            'X-Auth': generateAuthorizationString(),
-          },
-        }
+        { signal }
       );
 
       return deleteDublicateItems(response.data.result);
     } catch (e) {
-      console.error('Error getting items:', e.message);
-      throw e;
+      handleError(e);
     }
   },
 
-  filter: async (filterParams) => {
+  filter: async (signal, filterParams) => {
     try {
-      const response = await axios.post(
-        API_URL,
+      const response = await api.post(
+        '/',
         {
           action: 'filter',
           params: {
@@ -59,17 +42,12 @@ export const ProductAPI = {
                 : filterParams.value,
           },
         },
-        {
-          headers: {
-            'X-Auth': generateAuthorizationString(),
-          },
-        }
+        { signal }
       );
 
       return [...new Set(response.data.result)];
     } catch (e) {
-      console.error('Error filtering items:', e.message);
-      throw e;
+      handleError(e);
     }
   },
 };
