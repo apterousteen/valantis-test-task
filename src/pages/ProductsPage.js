@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 import { ProductAPI } from '../apis/ProductAPI';
 import { API_LIMIT_PER_PAGE } from '../apis/config';
@@ -11,18 +11,56 @@ import Loader from '../components/Loader';
 import Main from '../components/Main';
 import ErrorMessage from '../components/ErrorMessage';
 
+const initialFetchState = {
+  productsOnPage: [],
+  productsTotalCount: 0,
+  loading: true,
+  errorMsg: '',
+};
+
+const fetchStateReducer = (state, action) => {
+  switch (action.type) {
+    case 'fetch_start':
+      return {
+        ...state,
+        loading: true,
+        errorMsg: '',
+      };
+
+    case 'fetch_success':
+      return {
+        ...state,
+        loading: false,
+        errorMsg: '',
+        productsOnPage: action.payload.items,
+        productsTotalCount:
+          action.payload.ids?.length >= 0 ? action.payload.ids.length : 0,
+      };
+
+    case 'fetch_error':
+      return {
+        ...state,
+        loading: false,
+        errorMsg: action.payload.error,
+        productsOnPage: [],
+        productsTotalCount: 0,
+      };
+
+    default:
+      return { ...state };
+  }
+};
+
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
-  const [productsTotalCount, setProductsTotalCount] = useState(0);
   const offset = (page - 1) * API_LIMIT_PER_PAGE;
 
   const [filterKey, setFilterKey] = useState('none');
   const [filterValue, setFilterValue] = useState('');
   const [filterParams, setFilterParams] = useState({});
 
-  const [productsOnPage, setProductsOnPage] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [state, dispatch] = useReducer(fetchStateReducer, initialFetchState);
+  const { productsOnPage, productsTotalCount, loading, errorMsg } = state;
 
   const initialRender = useRef(false);
 
@@ -52,9 +90,7 @@ export default function ProductsPage() {
 
     const fetchProductsList = async () => {
       try {
-        setLoading(true);
-        setErrorMsg('');
-
+        dispatch({ type: 'fetch_start' });
         let ids;
         if (
           Object.keys(filterParams).length === 0 &&
@@ -69,22 +105,24 @@ export default function ProductsPage() {
           throw new Error('No products found');
         }
 
-        if (ids?.length) {
-          setProductsTotalCount(ids.length);
-        }
-
         const items = await ProductAPI.getItems(signal, ids, offset);
 
-        setProductsOnPage(items);
-        setErrorMsg('');
+        dispatch({
+          type: 'fetch_success',
+          payload: {
+            items,
+            ids,
+          },
+        });
       } catch (e) {
         if (e.name !== 'CanceledError' && e.name !== 'AbortError') {
-          setErrorMsg(e.message);
-          setProductsOnPage([]);
-          setProductsTotalCount(0);
+          dispatch({
+            type: 'fetch_error',
+            payload: {
+              error: e.message,
+            },
+          });
         }
-      } finally {
-        setLoading(false);
       }
     };
 
