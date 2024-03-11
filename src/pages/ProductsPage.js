@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { Box } from '@mui/material';
 import { ProductAPI } from '../apis/ProductAPI';
 import { API_LIMIT_PER_PAGE } from '../apis/config';
@@ -62,8 +62,6 @@ export default function ProductsPage() {
   const [state, dispatch] = useReducer(fetchStateReducer, initialFetchState);
   const { productsOnPage, productsTotalCount, loading, errorMsg } = state;
 
-  const initialRender = useRef(false);
-
   const handleFilter = async (event) => {
     event.preventDefault();
 
@@ -126,11 +124,7 @@ export default function ProductsPage() {
       }
     };
 
-    if (initialRender.current) {
-      fetchProductsList();
-    } else {
-      initialRender.current = true;
-    }
+    fetchProductsList();
 
     return () => {
       abortController.abort();
